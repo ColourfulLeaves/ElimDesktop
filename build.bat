@@ -1,0 +1,1 @@
+C:\Python37\Scripts\pyinstaller.exe -n Elim --add-data chart.html;. main.py

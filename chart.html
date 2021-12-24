@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+    
+    <head>
+        <meta charset="utf-8">
+        <script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+    </head>
+    
+    <body style="height: 100%; margin: 0">
+        <div id="container" style="height: 100%"></div>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/echarts.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl@1/dist/echarts-gl.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-stat@1/dist/ecStat.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/extension/dataTool.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/map/js/china.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/map/js/world.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@4/dist/extension/bmap.min.js"></script>
+        <script type="text/javascript">
+			/** * 对Date的扩展，将 Date 转化为指定格式的String * 月(M)、日(d)、12小时(h)、24小时(H)、分(m)、秒(s)、周(E)、季度(q)
+				可以用 1-2 个占位符 * 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字) * eg: * (new
+				Date()).pattern("yyyy-MM-dd hh:mm:ss.S")==> 2006-07-02 08:09:04.423      
+			* (new Date()).pattern("yyyy-MM-dd E HH:mm:ss") ==> 2009-03-10 二 20:09:04      
+			* (new Date()).pattern("yyyy-MM-dd EE hh:mm:ss") ==> 2009-03-10 周二 08:09:04      
+			* (new Date()).pattern("yyyy-MM-dd EEE hh:mm:ss") ==> 2009-03-10 星期二 08:09:04      
+			* (new Date()).pattern("yyyy-M-d h:m:s.S") ==> 2006-7-2 8:9:4.18      
+			*/        
+			Date.prototype.pattern=function(fmt) {         
+				var o = {         
+				"M+" : this.getMonth()+1, //月份         
+				"d+" : this.getDate(), //日         
+				"h+" : this.getHours()%12 == 0 ? 12 : this.getHours()%12, //小时         
+				"H+" : this.getHours(), //小时         
+				"m+" : this.getMinutes(), //分         
+				"s+" : this.getSeconds(), //秒         
+				"q+" : Math.floor((this.getMonth()+3)/3), //季度         
+				"S" : this.getMilliseconds() //毫秒         
+				};         
+				var week = {         
+				"0" : "/u65e5",         
+				"1" : "/u4e00",         
+				"2" : "/u4e8c",         
+				"3" : "/u4e09",         
+				"4" : "/u56db",         
+				"5" : "/u4e94",         
+				"6" : "/u516d"        
+				};         
+				if(/(y+)/.test(fmt)){         
+					fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));         
+				}         
+				if(/(E+)/.test(fmt)){         
+					fmt=fmt.replace(RegExp.$1, ((RegExp.$1.length>1) ? (RegExp.$1.length>2 ? "/u661f/u671f" : "/u5468") : "")+week[this.getDay()+""]);         
+				}         
+				for(var k in o){         
+					if(new RegExp("("+ k +")").test(fmt)){         
+						fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));         
+					}         
+				}         
+				return fmt;         
+			}       
+
+		    var dom = document.getElementById("container");
+            var myChart = echarts.init(dom);
+            var app = {};
+            option = null;
+            option = {
+                title: {
+                    text: '折线图堆叠'
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: ['Tenv', 'Tobj', 'NTC', 'INF', 'KOhm', 'Tenv fine', 'Tobj fine', 'Inf mv']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        console.log(params);
+						var d = new Date(params[0].value[0]);
+                        var htmlStr = '<div>Time：' + d.pattern("hh:mm:ss") + '</div>';
+                        for (var i = 0; i < params.length; i++) {
+                            var param = params[i];
+                            var xName = param.name; //x轴的名称
+                            var seriesName = param.seriesName; //图例名称
+                            var value = param.value; //y轴值
+                            var color = param.color; //图例颜色
+                            htmlStr += '<div>';
+							//为了保证和原来的效果一样，这里自己实现了一个点的效果
+							//htmlStr += '<span min-height: 16pt; font-size: 12pt; font-family: Consolas;">+color+';"></span>';
+							//圆点后面显示的文本
+							htmlStr += seriesName + '：' + value[1];
+							htmlStr += '</div>';
+
+                        }
+						console.log(htmlStr);
+                        return htmlStr;
+
+                    }
+                },
+                toolbox: {
+                    feature: {
+                        dataZoom: {},
+                        restore: {},
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'time',
+                    splitLine: {
+                        show: false
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    scale: true,
+                },
+                series: [{
+                    name: 'Tenv',
+                    type: 'line',
+                },
+                {
+                    name: 'Tobj',
+                    type: 'line',
+                },
+                {
+                    name: 'NTC',
+                    type: 'line',
+                },
+                {
+                    name: 'INF',
+                    type: 'line',
+                },
+                {
+                    name: 'KOhm',
+                    type: 'line',
+                },
+                {
+                    name: 'Inf mv',
+                    type: 'line',
+                }]
+            };;
+            if (option && typeof option === "object") {
+                myChart.setOption(option, true);
+            }
+
+            function update() {
+
+}
+
+            setInterval(function() {
+                $.get('/data').done(function(web_data) {
+                    var data_for_chart = {
+                        env: [],
+                        obj: [],
+                        ntc: [],
+                        inf: [],
+                        ohm: [],
+                        mvs: []
+                    };
+                    for (var i = 0; i < web_data.ts.length; i++) {
+                        ts = web_data.ts[i] * 1000;
+                        data_for_chart.env.push([ts, web_data.env[i]]);
+						data_for_chart.obj.push([ts, web_data.obj[i]]);
+						data_for_chart.ntc.push([ts, web_data.ntc[i]]);
+						data_for_chart.inf.push([ts, web_data.inf[i]]);
+						data_for_chart.ohm.push([ts, web_data.ohm[i]/10]);
+						data_for_chart.mvs.push([ts, web_data.mv[i]]);
+                    }
+
+                    myChart.setOption({
+                        series: [{
+                            data: data_for_chart.env,
+                        },
+                        {
+                            data: data_for_chart.obj,
+                        },
+                        {
+                            data: data_for_chart.ntc,
+                        },
+                        {
+                            data: data_for_chart.inf,
+                        },
+                        {
+                            data: data_for_chart.ohm,
+                        },
+                        {
+                            data: data_for_chart.mvs,
+                        }]
+                    });
+                });
+            },
+            10000);</script>
+    </body>
+
+</html>
